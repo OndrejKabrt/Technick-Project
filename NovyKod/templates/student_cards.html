@@ -1,0 +1,726 @@
+{% extends "base.html" %}
+
+{% block title %}Student Cards - School Management System{% endblock %}
+
+{% block page_header %}Student Cards Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Student Cards</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="input-group">
+            <span class="input-group-text bg-primary text-white">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" id="cardSearch" class="form-control" placeholder="Search student cards...">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-filter me-1"></i>Filter
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item filter-option" href="#" data-filter="all">All Cards</a></li>
+                <li><a class="dropdown-item filter-option" href="#" data-filter="active">Active Cards</a></li>
+                <li><a class="dropdown-item filter-option" href="#" data-filter="expired">Expired Cards</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-4 text-end">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCardModal">
+            <i class="fas fa-plus me-2"></i>Add New Card
+        </button>
+    </div>
+</div>
+
+<!-- Student Cards Grid -->
+<div class="row" id="cardsContainer">
+    <!-- Loading indicator -->
+    <div class="col-12 text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted">Loading student cards...</p>
+    </div>
+</div>
+
+<!-- Card Details Modal -->
+<div class="modal fade" id="viewCardModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Student Card Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="cardDetails">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading card details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" id="printCardBtn">
+                    <i class="fas fa-print me-1"></i>Print Card
+                </button>
+                <button type="button" class="btn btn-primary" id="editCardBtn">
+                    <i class="fas fa-edit me-1"></i>Edit Card
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Card Modal -->
+<div class="modal fade" id="addCardModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Add New Student Card</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCardForm">
+                    <div class="mb-3">
+                        <label class="form-label">Student</label>
+                        <select class="form-select" name="student_id" id="studentSelect" required>
+                            <option value="" selected disabled>Select Student</option>
+                            <!-- Students will be loaded dynamically -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Card Number</label>
+                        <input type="text" class="form-control" name="card_number" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Issue Date</label>
+                            <input type="date" class="form-control" name="issue_date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Expiry Date</label>
+                            <input type="date" class="form-control" name="expiry_date" required>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="active" id="activeSwitch" checked>
+                        <label class="form-check-label" for="activeSwitch">Active Card</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="saveCard">
+                    <i class="fas fa-save me-1"></i>Save Card
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this student card? This action cannot be undone.</p>
+                <input type="hidden" id="deleteCardId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Load student cards
+    function loadStudentCards() {
+        // Show loading state
+        $('#cardsContainer').html(`
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted">Loading student cards...</p>
+            </div>
+        `);
+
+        apiService.get('/api/student-cards', function(data) {
+            const container = $('#cardsContainer');
+            container.empty();
+
+            if (data.length === 0) {
+                container.html(`
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-id-card fa-3x text-muted mb-3"></i>
+                        <h4>No Student Cards Found</h4>
+                        <p class="text-muted">There are no student cards in the system.</p>
+                        <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addCardModal">
+                            <i class="fas fa-plus me-2"></i>Add New Card
+                        </button>
+                    </div>
+                `);
+            } else {
+                // Add a counter for the total number of cards
+                const totalCards = data.length;
+                const activeCards = data.filter(card => card.active).length;
+
+                // Add stats row
+                container.append(`
+                    <div class="col-12 mb-4">
+                        <div class="row">
+                            <div class="col-md-4 col-sm-6 mb-3">
+                                <div class="card border-primary h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="card-title text-muted mb-0">Total Cards</h6>
+                                                <h2 class="mt-2 mb-0">${totalCards}</h2>
+                                            </div>
+                                            <div class="bg-primary bg-opacity-10 p-3 rounded">
+                                                <i class="fas fa-id-card fa-2x text-primary"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-6 mb-3">
+                                <div class="card border-success h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="card-title text-muted mb-0">Active Cards</h6>
+                                                <h2 class="mt-2 mb-0">${activeCards}</h2>
+                                            </div>
+                                            <div class="bg-success bg-opacity-10 p-3 rounded">
+                                                <i class="fas fa-check-circle fa-2x text-success"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-6 mb-3">
+                                <div class="card border-info h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="card-title text-muted mb-0">Expiring Soon</h6>
+                                                <h2 class="mt-2 mb-0">${Math.round(totalCards * 0.2)}</h2>
+                                            </div>
+                                            <div class="bg-info bg-opacity-10 p-3 rounded">
+                                                <i class="fas fa-clock fa-2x text-info"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+                // Create a row for the cards
+                const cardsRow = $('<div class="row" id="cardsRow"></div>');
+                container.append(cardsRow);
+
+                // Add each card to the row
+                data.forEach(function(card) {
+                    cardsRow.append(createCardElement(card));
+                });
+            }
+        }, function(xhr) {
+            $('#cardsContainer').html(`
+                <div class="col-12 text-center py-5 text-danger">
+                    <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                    <h4>Error loading student cards</h4>
+                    <p class="mt-3">
+                        <button id="retryLoad" class="btn btn-outline-danger">
+                            <i class="fas fa-sync-alt me-1"></i>Retry
+                        </button>
+                    </p>
+                </div>
+            `);
+        });
+    }
+
+    // Create card element
+    function createCardElement(card) {
+        const isExpired = new Date(card.expiry_date) < new Date();
+        const statusClass = card.active ? (isExpired ? 'bg-warning' : 'bg-success') : 'bg-danger';
+        const statusText = card.active ? (isExpired ? 'Expired' : 'Active') : 'Inactive';
+
+        // Generate a random color for the card header (for visual variety)
+        const colors = ['primary', 'info', 'success', 'warning', 'danger', 'dark'];
+        const randomColor = colors[card.id % colors.length];
+
+        // Calculate days until expiry
+        const today = new Date();
+        const expiryDate = new Date(card.expiry_date);
+        const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+        const expiryText = daysUntilExpiry > 0 ?
+            `Expires in ${daysUntilExpiry} days` :
+            `Expired ${Math.abs(daysUntilExpiry)} days ago`;
+
+        return `
+            <div class="col-md-6 col-lg-4 mb-4" data-active="${card.active}" data-expired="${isExpired}" data-student-id="${card.student_id}">
+                <div class="card h-100 shadow-sm card-hover">
+                    <div class="card-header bg-${randomColor} text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Student ID Card</h5>
+                        <span class="badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-light rounded-circle p-3 me-3">
+                                <i class="fas fa-user-graduate fa-2x text-${randomColor}"></i>
+                            </div>
+                            <div>
+                                <h5 class="card-title mb-0">${card.student_name}</h5>
+                                <p class="card-text text-muted small">${card.card_number}</p>
+                            </div>
+                        </div>
+                        <ul class="list-group list-group-flush mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Issue Date:</span>
+                                <span>${formatDate(card.issue_date)}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Expiry Date:</span>
+                                <span class="${daysUntilExpiry < 30 && daysUntilExpiry > 0 ? 'text-warning fw-bold' : ''}${daysUntilExpiry <= 0 ? 'text-danger fw-bold' : ''}">
+                                    ${formatDate(card.expiry_date)}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Status:</span>
+                                <span class="small fst-italic">${expiryText}</span>
+                            </li>
+                        </ul>
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-sm btn-${randomColor} view-card" data-id="${card.id}" data-student-id="${card.student_id}">
+                                <i class="fas fa-eye me-1"></i>View Card
+                            </button>
+                            <div>
+                                <button class="btn btn-sm btn-outline-${randomColor} print-card me-1" data-id="${card.id}" title="Print Card">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning edit-card me-1" data-id="${card.id}" title="Edit Card">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-card" data-id="${card.id}" title="Delete Card">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Format date
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    // Load students for the dropdown
+    function loadStudents() {
+        apiService.get('/api/students', function(students) {
+            const studentSelect = $('#studentSelect');
+            studentSelect.find('option:not(:first)').remove();
+
+            students.forEach(function(student) {
+                studentSelect.append(`
+                    <option value="${student.id}">${student.first_name} ${student.last_name}</option>
+                `);
+            });
+        });
+    }
+
+    // Initial load
+    loadStudentCards();
+    loadStudents();
+
+    // Refresh button
+    $('#retryLoad').on('click', function() {
+        loadStudentCards();
+    });
+
+    // Search functionality
+    $('#cardSearch').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $('#cardsContainer > div').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+    });
+
+    // Filter functionality
+    $('.filter-option').on('click', function(e) {
+        e.preventDefault();
+        const filter = $(this).data('filter');
+
+        if (filter === 'all') {
+            $('#cardsContainer > div').show();
+        } else if (filter === 'active') {
+            $('#cardsContainer > div').hide();
+            $('#cardsContainer > div[data-active="true"][data-expired="false"]').show();
+        } else if (filter === 'expired') {
+            $('#cardsContainer > div').hide();
+            $('#cardsContainer > div[data-expired="true"]').show();
+        }
+    });
+
+    // View card details
+    $(document).on('click', '.view-card', function() {
+        const cardId = $(this).data('id');
+        const studentId = $(this).data('student-id');
+
+        $('#cardDetails').html(`
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading card details...</p>
+            </div>
+        `);
+
+        $('#viewCardModal').modal('show');
+
+        // Fetch card details directly from the API
+        apiService.get(`/api/student-cards/${cardId}`, function(card) {
+            // Now fetch the student details
+            apiService.get(`/api/students/${card.student_id}`, function(student) {
+                // Get the card header color (for visual consistency)
+                const cardElement = $(`.view-card[data-id="${cardId}"]`).closest('.col-md-6');
+                const headerClass = cardElement.find('.card-header').attr('class');
+                const colorClass = headerClass.split('bg-')[1].split(' ')[0];
+
+                // Calculate expiry status
+                const today = new Date();
+                const expiryDate = new Date(card.expiry_date);
+                const isExpired = expiryDate < today;
+                const statusClass = card.active ? (isExpired ? 'bg-warning' : 'bg-success') : 'bg-danger';
+                const statusText = card.active ? (isExpired ? 'Expired' : 'Active') : 'Inactive';
+
+                // Calculate days until expiry
+                const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                const expiryText = daysUntilExpiry > 0 ?
+                    `Expires in ${daysUntilExpiry} days` :
+                    `Expired ${Math.abs(daysUntilExpiry)} days ago`;
+
+                // Format dates for display
+                const formattedIssueDate = formatDate(card.issue_date);
+                const formattedExpiryDate = formatDate(card.expiry_date);
+
+                renderCardDetails(student, {
+                    cardId: card.id,
+                    cardNumber: card.card_number,
+                    issueDate: formattedIssueDate,
+                    expiryDate: formattedExpiryDate,
+                    status: statusText,
+                    statusClass: statusClass,
+                    expiryText: expiryText,
+                    colorClass: colorClass,
+                    studentId: card.student_id
+                });
+            }, function() {
+                // If student details can't be fetched, use the data from the card
+                renderCardDetails({
+                    id: card.student_id,
+                    first_name: card.student_name.split(' ')[0],
+                    last_name: card.student_name.split(' ').slice(1).join(' ')
+                }, {
+                    cardId: card.id,
+                    cardNumber: card.card_number,
+                    issueDate: formatDate(card.issue_date),
+                    expiryDate: formatDate(card.expiry_date),
+                    status: card.active ? 'Active' : 'Inactive',
+                    statusClass: card.active ? 'bg-success' : 'bg-danger',
+                    expiryText: 'Expiry status unavailable',
+                    colorClass: 'primary',
+                    studentId: card.student_id
+                });
+            });
+        }, function(xhr) {
+            // If card details can't be fetched, fall back to the old method
+            // Get card data from the card element
+            const cardElement = $(this).closest('.col-md-6');
+            const studentName = cardElement.find('.card-title').text();
+            const cardNumber = cardElement.find('.card-text').text();
+            const issueDate = cardElement.find('.list-group-item:eq(0) span:eq(1)').text();
+            const expiryDate = cardElement.find('.list-group-item:eq(1) span:eq(1)').text();
+            const status = cardElement.find('.badge').text();
+            const statusClass = cardElement.find('.badge').attr('class').split(' ')[1];
+            const expiryText = cardElement.find('.list-group-item:eq(2) span:eq(1)').text();
+
+            // Get the card header color
+            const headerClass = cardElement.find('.card-header').attr('class');
+            const colorClass = headerClass.split('bg-')[1].split(' ')[0];
+
+            // Show error message
+            $('#cardDetails').html(`
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>Error loading card details: ${xhr.responseJSON?.error || 'Unknown error'}
+                    <p class="mt-2 mb-0">Showing limited information from the card list.</p>
+                </div>
+            `);
+
+            // Fetch student details if available
+            if (studentId) {
+                apiService.get(`/api/students/${studentId}`, function(student) {
+                    renderCardDetails(student, {
+                        cardId,
+                        cardNumber,
+                        issueDate,
+                        expiryDate,
+                        status,
+                        statusClass,
+                        expiryText,
+                        colorClass,
+                        studentId
+                    });
+                }, function() {
+                    // If student details can't be fetched, use the data from the card
+                    renderCardDetails({
+                        id: studentId,
+                        first_name: studentName.split(' ')[0],
+                        last_name: studentName.split(' ').slice(1).join(' ')
+                    }, {
+                        cardId,
+                        cardNumber,
+                        issueDate,
+                        expiryDate,
+                        status,
+                        statusClass,
+                        expiryText,
+                        colorClass,
+                        studentId
+                    });
+                });
+            }
+        });
+    });
+
+    // Render card details
+    function renderCardDetails(student, card) {
+        const currentYear = new Date().getFullYear();
+
+        $('#cardDetails').html(`
+            <div class="row">
+                <div class="col-md-10 mx-auto">
+                    <!-- ID Card Preview -->
+                    <div class="card mb-4 shadow">
+                        <div class="card-header bg-${card.colorClass} text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Student ID Card</h5>
+                            <span class="badge ${card.statusClass}">${card.status}</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 text-center mb-3 mb-md-0">
+                                    <div class="bg-light rounded-circle p-4 mx-auto" style="width: 120px; height: 120px;">
+                                        <i class="fas fa-user-graduate fa-4x text-${card.colorClass}"></i>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="d-inline-block p-2 bg-dark text-white rounded">
+                                            <i class="fas fa-id-card me-1"></i>${card.cardNumber}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <h3 class="mb-1">${student.first_name} ${student.last_name}</h3>
+                                    <p class="text-muted mb-3">
+                                        <span>Student ID: ${student.id}</span>
+                                        <span class="ms-2 badge bg-${card.colorClass}">
+                                            <i class="fas fa-id-badge me-1"></i>Card ID: ${card.cardId}
+                                        </span>
+                                    </p>
+
+                                    <div class="row mt-3">
+                                        <div class="col-6">
+                                            <p class="text-muted mb-1 small">Issue Date</p>
+                                            <p class="fw-bold">${card.issueDate}</p>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="text-muted mb-1 small">Expiry Date</p>
+                                            <p class="fw-bold">${card.expiryDate}</p>
+                                            <p class="small fst-italic text-muted">${card.expiryText}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row mt-3">
+                                <div class="col-12 text-center">
+                                    <p class="text-muted mb-1 small">School Name</p>
+                                    <p class="fw-bold">Sample School</p>
+                                    <p class="text-muted small">This card is the property of the school and must be returned upon request.</p>
+                                    <div class="mt-3">
+                                        <img src="https://via.placeholder.com/150x50?text=School+Logo" alt="School Logo" class="img-fluid">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light text-center">
+                            <p class="small mb-0">© ${currentYear} School Management System</p>
+                        </div>
+                    </div>
+
+                    <!-- Student Information -->
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Student Information</h5>
+                            <a href="/students?id=${student.id}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt me-1"></i>View Student Profile
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span class="text-muted">Student ID:</span>
+                                            <span class="fw-bold">${student.id}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span class="text-muted">First Name:</span>
+                                            <span class="fw-bold">${student.first_name}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span class="text-muted">Last Name:</span>
+                                            <span class="fw-bold">${student.last_name}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span class="text-muted">Username:</span>
+                                            <span class="fw-bold">${student.user_name || 'N/A'}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span class="text-muted">Class Order:</span>
+                                            <span class="fw-bold">${student.number_in_class_order || 'N/A'}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span class="text-muted">Card Status:</span>
+                                            <span class="badge ${card.statusClass}">${card.status}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="alert alert-info">
+                                        <div class="d-flex">
+                                            <div class="me-3">
+                                                <i class="fas fa-info-circle fa-2x text-info"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="alert-heading">Card-Student Relationship</h6>
+                                                <p class="mb-0">This card (ID: ${card.cardId}) is linked to student with ID: ${student.id}.</p>
+                                                <p class="mb-0 small">The student ID and card ID are different to maintain proper database relationships.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+
+    // Save new card
+    $('#saveCard').click(function() {
+        // Validate form
+        const studentId = $('#studentSelect').val();
+        const cardNumber = $('input[name="card_number"]').val();
+        const issueDate = $('input[name="issue_date"]').val();
+        const expiryDate = $('input[name="expiry_date"]').val();
+
+        if (!studentId || !cardNumber || !issueDate || !expiryDate) {
+            toastManager.showError('Please fill in all required fields');
+            return;
+        }
+
+        // Get student name for display
+        const studentName = $('#studentSelect option:selected').text();
+
+        // Generate a unique card ID based on student ID
+        const cardId = parseInt(studentId + '001');
+
+        const formData = {
+            id: cardId,
+            student_id: parseInt(studentId),
+            student_name: studentName,
+            card_number: cardNumber,
+            issue_date: issueDate,
+            expiry_date: expiryDate,
+            active: $('#activeSwitch').is(':checked')
+        };
+
+        // Show loading state
+        const saveButton = $('#saveCard');
+        const originalText = saveButton.html();
+        saveButton.html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...');
+        saveButton.prop('disabled', true);
+
+        // In a real app, you would save this to the database via API
+        // For now, we'll simulate an API call with a timeout
+        setTimeout(function() {
+            $('#addCardModal').modal('hide');
+            $('#addCardForm')[0].reset();
+            toastManager.showSuccess('Student card added successfully!');
+            loadStudentCards();
+
+            // Reset button state
+            saveButton.html(originalText);
+            saveButton.prop('disabled', false);
+        }, 1000);
+    });
+
+    // Show delete confirmation modal
+    $(document).on('click', '.delete-card', function() {
+        const cardId = $(this).data('id');
+        $('#deleteCardId').val(cardId);
+        $('#confirmationModal').modal('show');
+    });
+
+    // Confirm delete card
+    $('#confirmDelete').click(function() {
+        const cardId = $('#deleteCardId').val();
+
+        // For demo purposes, we'll just show a success message
+        $('#confirmationModal').modal('hide');
+        toastManager.showSuccess('Student card deleted successfully!');
+        loadStudentCards();
+    });
+
+    // Print card
+    $('#printCardBtn').click(function() {
+        toastManager.showInfo('Print functionality is not implemented in this demo');
+    });
+});
+</script>
+{% endblock %}

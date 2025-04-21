@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - School Management System{% endblock %}
+
+{% block page_header %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Summary Cards -->
+    <div class="col-md-3 mb-4">
+        <div class="card h-100 border-primary">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-user-graduate me-2"></i>Students
+            </div>
+            <div class="card-body">
+                <h5 class="card-title" id="studentCount">Loading...</h5>
+                <p class="card-text">Manage student records, view profiles and track academic progress.</p>
+                <a href="{{ url_for('students_page') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-cog me-1"></i>Manage Students
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card h-100 border-success">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-chalkboard me-2"></i>Classes
+            </div>
+            <div class="card-body">
+                <h5 class="card-title" id="classCount">Loading...</h5>
+                <p class="card-text">Organize classes, assign teachers and manage class schedules.</p>
+                <a href="{{ url_for('classes_page') }}" class="btn btn-outline-success">
+                    <i class="fas fa-cog me-1"></i>Manage Classes
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card h-100 border-info">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-chalkboard-teacher me-2"></i>Teachers
+            </div>
+            <div class="card-body">
+                <h5 class="card-title" id="teacherCount">Loading...</h5>
+                <p class="card-text">Manage teacher profiles, assignments and contact information.</p>
+                <a href="{{ url_for('teachers_page') }}" class="btn btn-outline-info">
+                    <i class="fas fa-cog me-1"></i>Manage Teachers
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card h-100 border-warning">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-book me-2"></i>Courses
+            </div>
+            <div class="card-body">
+                <h5 class="card-title" id="courseCount">Loading...</h5>
+                <p class="card-text">Create and manage courses, assign teachers and enroll students.</p>
+                <a href="{{ url_for('courses_page') }}" class="btn btn-outline-warning">
+                    <i class="fas fa-cog me-1"></i>Manage Courses
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Second Row with Additional Cards -->
+<div class="row mt-4">
+    <div class="col-md-3 mb-4">
+        <div class="card h-100 border-danger">
+            <div class="card-header bg-danger text-white">
+                <i class="fas fa-book-open me-2"></i>Subjects
+            </div>
+            <div class="card-body">
+                <h5 class="card-title" id="subjectCount">Loading...</h5>
+                <p class="card-text">Manage academic subjects and their curriculum details.</p>
+                <a href="{{ url_for('subjects_page') }}" class="btn btn-outline-danger">
+                    <i class="fas fa-cog me-1"></i>Manage Subjects
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card h-100 border-secondary">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-star me-2"></i>Grades
+            </div>
+            <div class="card-body">
+                <h5 class="card-title" id="gradeCount">Loading...</h5>
+                <p class="card-text">Record and manage student grades and academic performance.</p>
+                <a href="{{ url_for('grades_page') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-cog me-1"></i>Manage Grades
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card h-100 border-dark">
+            <div class="card-header bg-dark text-white">
+                <i class="fas fa-certificate me-2"></i>Certificates
+            </div>
+            <div class="card-body">
+                <h5 class="card-title" id="certificateCount">Loading...</h5>
+                <p class="card-text">Generate and manage student certificates and achievements.</p>
+                <a href="{{ url_for('certificates_page') }}" class="btn btn-outline-dark">
+                    <i class="fas fa-cog me-1"></i>Manage Certificates
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card h-100 border-primary">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-id-card me-2"></i>Student Cards
+            </div>
+            <div class="card-body">
+                <h5 class="card-title" id="studentCardCount">Loading...</h5>
+                <p class="card-text">Manage student identification cards and personal information.</p>
+                <a href="{{ url_for('student_cards_page') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-cog me-1"></i>Manage Cards
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Load counts from API
+    $.ajax({
+        url: '/api/students',
+        method: 'GET',
+        success: function(data) {
+            $('#studentCount').html(`<strong>${data.length}</strong> Total Students`);
+        },
+        error: function() {
+            $('#studentCount').html('<span class="text-danger">Error loading data</span>');
+        }
+    });
+
+    $.ajax({
+        url: '/api/classes',
+        method: 'GET',
+        success: function(data) {
+            $('#classCount').html(`<strong>${data.length}</strong> Total Classes`);
+        },
+        error: function() {
+            $('#classCount').html('<span class="text-danger">Error loading data</span>');
+        }
+    });
+
+    $.ajax({
+        url: '/api/teachers',
+        method: 'GET',
+        success: function(data) {
+            $('#teacherCount').html(`<strong>${data.length}</strong> Total Teachers`);
+        },
+        error: function() {
+            $('#teacherCount').html('<span class="text-danger">Error loading data</span>');
+        }
+    });
+
+    $.ajax({
+        url: '/api/courses',
+        method: 'GET',
+        success: function(data) {
+            $('#courseCount').html(`<strong>${data.length}</strong> Total Courses`);
+        },
+        error: function() {
+            $('#courseCount').html('<span class="text-danger">Error loading data</span>');
+        }
+    });
+
+    $.ajax({
+        url: '/api/subjects',
+        method: 'GET',
+        success: function(data) {
+            $('#subjectCount').html(`<strong>${data.length}</strong> Total Subjects`);
+        },
+        error: function() {
+            $('#subjectCount').html('<span class="text-danger">Error loading data</span>');
+        }
+    });
+
+    $.ajax({
+        url: '/api/grades',
+        method: 'GET',
+        success: function(data) {
+            $('#gradeCount').html(`<strong>${data.length}</strong> Total Grades`);
+        },
+        error: function() {
+            $('#gradeCount').html('<span class="text-danger">Error loading data</span>');
+        }
+    });
+
+    $.ajax({
+        url: '/api/certificates',
+        method: 'GET',
+        success: function(data) {
+            $('#certificateCount').html(`<strong>${data.length}</strong> Total Certificates`);
+        },
+        error: function() {
+            $('#certificateCount').html('<span class="text-danger">Error loading data</span>');
+        }
+    });
+
+    $.ajax({
+        url: '/api/student-cards',
+        method: 'GET',
+        success: function(data) {
+            $('#studentCardCount').html(`<strong>${data.length}</strong> Total Cards`);
+        },
+        error: function() {
+            $('#studentCardCount').html('<span class="text-danger">Error loading data</span>');
+        }
+    });
+});
+</script>
+{% endblock %}

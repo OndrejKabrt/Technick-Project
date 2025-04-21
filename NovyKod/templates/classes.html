@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+
+{% block title %}Classes - School Management System{% endblock %}
+
+{% block page_header %}Classes Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Classes</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="input-group">
+            <span class="input-group-text bg-primary text-white">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" id="classSearch" class="form-control" placeholder="Search classes...">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-filter me-1"></i>Filter
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item filter-option" href="#" data-filter="all">All Classes</a></li>
+                <li><a class="dropdown-item filter-option" href="#" data-filter="active">Active Classes</a></li>
+                <li><a class="dropdown-item filter-option" href="#" data-filter="inactive">Inactive Classes</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item filter-option" href="#" data-filter="year">Group by Year</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-4 text-end">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClassModal">
+            <i class="fas fa-plus me-2"></i>Add New Class
+        </button>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-0">Total Classes</h6>
+                        <h2 class="mt-2 mb-0" id="totalClassCount">-</h2>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded">
+                        <i class="fas fa-chalkboard fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-0">Active Classes</h6>
+                        <h2 class="mt-2 mb-0" id="activeClassCount">-</h2>
+                    </div>
+                    <div class="bg-success bg-opacity-10 p-3 rounded">
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-0">Average Students</h6>
+                        <h2 class="mt-2 mb-0" id="avgStudentsCount">-</h2>
+                    </div>
+                    <div class="bg-info bg-opacity-10 p-3 rounded">
+                        <i class="fas fa-user-graduate fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-0">School Years</h6>
+                        <h2 class="mt-2 mb-0" id="yearsCount">-</h2>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 p-3 rounded">
+                        <i class="fas fa-calendar-alt fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Classes Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-chalkboard me-2"></i>Class Records</h5>
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-secondary" id="refreshClasses">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="exportClasses">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Grade</th>
+                        <th>Class Number</th>
+                        <th>Year of Entry</th>
+                        <th>Status</th>
+                        <th>Teacher</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="classTableBody">
+                    <!-- Loading indicator -->
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading class data...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-light">
+        <div class="d-flex justify-content-between align-items-center">
+            <span id="classCount" class="text-muted">Loading class count...</span>
+            <nav aria-label="Class pagination" id="classPagination" class="d-none">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Class Details Modal -->
+<div class="modal fade" id="viewClassModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-chalkboard me-2"></i>Class Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="classDetails">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading class details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="editClassBtn">
+                    <i class="fas fa-edit me-1"></i>Edit Class
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Class Modal -->
+<div class="modal fade" id="addClassModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Add New Class</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addClassForm">
+                    <div class="mb-3">
+                        <label class="form-label">Class Name</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Grade</label>
+                        <select class="form-select" name="grade" required>
+                            <option value="" selected disabled>Select Grade</option>
+                            <option value="1">Grade 1</option>
+                            <option value="2">Grade 2</option>
+                            <option value="3">Grade 3</option>
+                            <option value="4">Grade 4</option>
+                            <option value="5">Grade 5</option>
+                            <option value="6">Grade 6</option>
+                            <option value="7">Grade 7</option>
+                            <option value="8">Grade 8</option>
+                            <option value="9">Grade 9</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Class Number</label>
+                        <input type="number" class="form-control" name="number_of_class" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Year of Entry</label>
+                        <input type="number" class="form-control" name="year_of_entry" required min="2000" max="2099">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Class Teacher</label>
+                        <select class="form-select" name="class_teacher_id" id="teacherSelect">
+                            <option value="" selected disabled>Select Teacher</option>
+                            <!-- Teachers will be loaded dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="active" id="activeSwitch" checked>
+                        <label class="form-check-label" for="activeSwitch">Active Class</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="saveClass">
+                    <i class="fas fa-save me-1"></i>Save Class
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this class? This action cannot be undone.</p>
+                <input type="hidden" id="deleteClassId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Load classes
+    function loadClasses() {
+        apiService.get('/api/classes', function(data) {
+            const tbody = $('#classTableBody');
+            tbody.empty();
+            
+            if (data.length === 0) {
+                tbody.html(`
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <i class="fas fa-info-circle text-muted me-2"></i>No classes found.
+                            <p class="mt-2">
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addClassModal">
+                                    <i class="fas fa-plus me-1"></i>Add Your First Class
+                                </button>
+                            </p>
+                        </td>
+                    </tr>
+                `);
+            } else {
+                // Update stats
+                $('#totalClassCount').text(data.length);
+                
+                const activeClasses = data.filter(c => c.active).length;
+                $('#activeClassCount').text(activeClasses);
+                
+                // Get unique years
+                const years = [...new Set(data.map(c => c.year_of_entry))];
+                $('#yearsCount').text(years.length);
+                
+                // Placeholder for average students (would need additional API call in real app)
+                $('#avgStudentsCount').text('25');
+                
+                // Populate table
+                data.forEach(function(classItem) {
+                    tbody.append(`
+                        <tr data-active="${classItem.active}">
+                            <td>${classItem.id || 'N/A'}</td>
+                            <td>${classItem.name || 'N/A'}</td>
+                            <td>${classItem.grade || 'N/A'}</td>
+                            <td>${classItem.number_of_class || 'N/A'}</td>
+                            <td>${classItem.year_of_entry || 'N/A'}</td>
+                            <td>
+                                <span class="badge ${classItem.active ? 'bg-success' : 'bg-danger'}">
+                                    ${classItem.active ? 'Active' : 'Inactive'}
+                                </span>
+                            </td>
+                            <td class="teacher-name" data-teacher-id="${classItem.class_teacher_id}">
+                                <span class="placeholder-glow">
+                                    <span class="placeholder col-8"></span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-info view-class me-1" data-id="${classItem.id}" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning edit-class me-1" data-id="${classItem.id}" title="Edit Class">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-class" data-id="${classItem.id}" title="Delete Class">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
+                
+                // Load teacher names
+                loadTeacherNames();
+                
+                $('#classCount').text(`Total Classes: ${data.length}`);
+            }
+        }, function(xhr) {
+            $('#classTableBody').html(`
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Error loading class data.
+                        <p class="mt-2">
+                            <button id="retryLoad" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-sync-alt me-1"></i>Retry
+                            </button>
+                        </p>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+    
+    // Load teacher names for the dropdown and table
+    function loadTeacherNames() {
+        apiService.get('/api/teachers', function(teachers) {
+            // Populate teacher dropdown
+            const teacherSelect = $('#teacherSelect');
+            teacherSelect.find('option:not(:first)').remove();
+            
+            teachers.forEach(function(teacher) {
+                teacherSelect.append(`
+                    <option value="${teacher.id}">${teacher.first_name} ${teacher.last_name}</option>
+                `);
+            });
+            
+            // Update teacher names in the table
+            teachers.forEach(function(teacher) {
+                $(`.teacher-name[data-teacher-id="${teacher.id}"]`).html(
+                    `${teacher.first_name} ${teacher.last_name}`
+                );
+            });
+            
+            // Handle any remaining placeholders (teachers not found)
+            $('.teacher-name:has(.placeholder)').html('<em class="text-muted">Not assigned</em>');
+        });
+    }
+
+    // Initial load
+    loadClasses();
+    
+    // Refresh button
+    $('#refreshClasses, #retryLoad').on('click', function() {
+        loadClasses();
+    });
+    
+    // Search functionality
+    $('#classSearch').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $('#classTableBody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+    });
+    
+    // Filter functionality
+    $('.filter-option').on('click', function(e) {
+        e.preventDefault();
+        const filter = $(this).data('filter');
+        
+        if (filter === 'all') {
+            $('#classTableBody tr').show();
+        } else if (filter === 'active') {
+            $('#classTableBody tr').hide();
+            $('#classTableBody tr[data-active="true"]').show();
+        } else if (filter === 'inactive') {
+            $('#classTableBody tr').hide();
+            $('#classTableBody tr[data-active="false"]').show();
+        } else if (filter === 'year') {
+            // Group by year logic would go here
+            toastManager.showInfo('Grouping by year is not implemented in this demo');
+        }
+    });
+
+    // View class details
+    $(document).on('click', '.view-class', function() {
+        const classId = $(this).data('id');
+        $('#classDetails').html(`
+            <div class="text-center py-4">
+                <div class="spinner-border text-info" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading class details...</p>
+            </div>
+        `);
+        
+        $('#viewClassModal').modal('show');
+        
+        apiService.get(`/api/classes/${classId}`, function(classData) {
+            // Get teacher name
+            let teacherName = 'Not assigned';
+            if (classData.class_teacher_id) {
+                const teacherCell = $(`.teacher-name[data-teacher-id="${classData.class_teacher_id}"]`);
+                if (teacherCell.length && !teacherCell.find('.placeholder').length) {
+                    teacherName = teacherCell.text().trim();
+                }
+            }
+            
+            $('#classDetails').html(`
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Class Information</h6>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>ID:</span>
+                                <span class="fw-bold">${classData.id}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Name:</span>
+                                <span class="fw-bold">${classData.name}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Grade:</span>
+                                <span class="fw-bold">${classData.grade}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Class Number:</span>
+                                <span class="fw-bold">${classData.number_of_class}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Year of Entry:</span>
+                                <span class="fw-bold">${classData.year_of_entry}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Status:</span>
+                                <span class="badge ${classData.active ? 'bg-success' : 'bg-danger'}">
+                                    ${classData.active ? 'Active' : 'Inactive'}
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Teacher Information</h6>
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">${teacherName}</h5>
+                                <p class="card-text">Class Teacher</p>
+                                ${classData.class_teacher_id ? 
+                                    `<a href="/teachers?id=${classData.class_teacher_id}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-user me-1"></i>View Teacher Profile
+                                    </a>` : 
+                                    `<button class="btn btn-sm btn-outline-secondary" disabled>
+                                        <i class="fas fa-user-slash me-1"></i>No Teacher Assigned
+                                    </button>`
+                                }
+                            </div>
+                        </div>
+                        
+                        <h6 class="text-muted">Students</h6>
+                        <div class="text-center py-4" id="classStudents">
+                            <div class="spinner-border spinner-border-sm text-info" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted small">Loading students...</p>
+                        </div>
+                    </div>
+                </div>
+            `);
+            
+            // This would be a real API call in a production app
+            // For demo purposes, we'll just show a placeholder
+            setTimeout(() => {
+                $('#classStudents').html(`
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>Student listing is not implemented in this demo.
+                    </div>
+                `);
+            }, 1000);
+        }, function(xhr) {
+            $('#classDetails').html(`
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>Error loading class details: ${xhr.responseJSON?.error || 'Unknown error'}
+                </div>
+            `);
+        });
+    });
+
+    // Save new class
+    $('#saveClass').click(function() {
+        const formData = {
+            name: $('input[name="name"]').val(),
+            grade: parseInt($('select[name="grade"]').val()),
+            number_of_class: parseInt($('input[name="number_of_class"]').val()),
+            year_of_entry: parseInt($('input[name="year_of_entry"]').val()),
+            active: $('#activeSwitch').is(':checked'),
+            class_teacher_id: $('select[name="class_teacher_id"]').val() || null
+        };
+
+        apiService.post('/api/classes', formData, function(response) {
+            $('#addClassModal').modal('hide');
+            $('#addClassForm')[0].reset();
+            loadClasses();
+            toastManager.showSuccess('Class added successfully!');
+        });
+    });
+
+    // Show delete confirmation modal
+    $(document).on('click', '.delete-class', function() {
+        const classId = $(this).data('id');
+        $('#deleteClassId').val(classId);
+        $('#confirmationModal').modal('show');
+    });
+    
+    // Confirm delete class
+    $('#confirmDelete').click(function() {
+        const classId = $('#deleteClassId').val();
+        
+        apiService.delete(`/api/classes/${classId}`, function() {
+            $('#confirmationModal').modal('hide');
+            loadClasses();
+            toastManager.showSuccess('Class deleted successfully!');
+        });
+    });
+    
+    // Export classes (demo functionality)
+    $('#exportClasses').click(function() {
+        toastManager.showInfo('Export functionality is not implemented in this demo');
+    });
+});
+</script>
+{% endblock %}

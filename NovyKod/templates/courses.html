@@ -1,0 +1,694 @@
+{% extends "base.html" %}
+
+{% block title %}Courses - School Management System{% endblock %}
+
+{% block page_header %}Courses Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Courses</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="input-group">
+            <span class="input-group-text bg-primary text-white">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" id="courseSearch" class="form-control" placeholder="Search courses...">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-filter me-1"></i>Filter
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item filter-option" href="#" data-filter="all">All Courses</a></li>
+                <li><a class="dropdown-item filter-option" href="#" data-filter="subject">Filter by Subject</a></li>
+                <li><a class="dropdown-item filter-option" href="#" data-filter="teacher">Filter by Teacher</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item filter-option" href="#" data-filter="active">Active Courses</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-4 text-end">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+            <i class="fas fa-plus me-2"></i>Add New Course
+        </button>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-0">Total Courses</h6>
+                        <h2 class="mt-2 mb-0" id="totalCourseCount">-</h2>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 p-3 rounded">
+                        <i class="fas fa-book fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-0">Active Courses</h6>
+                        <h2 class="mt-2 mb-0" id="activeCourseCount">-</h2>
+                    </div>
+                    <div class="bg-success bg-opacity-10 p-3 rounded">
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-0">Avg. Students</h6>
+                        <h2 class="mt-2 mb-0" id="avgStudentsCount">-</h2>
+                    </div>
+                    <div class="bg-info bg-opacity-10 p-3 rounded">
+                        <i class="fas fa-user-graduate fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-0">Total Hours</h6>
+                        <h2 class="mt-2 mb-0" id="totalHoursCount">-</h2>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 p-3 rounded">
+                        <i class="fas fa-clock fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Courses Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-book me-2"></i>Course Records</h5>
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-secondary" id="refreshCourses">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="exportCourses">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Course Name</th>
+                        <th>Theory Hours</th>
+                        <th>Practice Hours</th>
+                        <th>Teacher</th>
+                        <th>Subject</th>
+                        <th>Students</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="courseTableBody">
+                    <!-- Loading indicator -->
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading course data...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-light">
+        <div class="d-flex justify-content-between align-items-center">
+            <span id="courseCount" class="text-muted">Loading course count...</span>
+            <nav aria-label="Course pagination" id="coursePagination" class="d-none">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Course Details Modal -->
+<div class="modal fade" id="viewCourseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fas fa-book me-2"></i>Course Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="courseDetails">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-warning" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading course details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="editCourseBtn">
+                    <i class="fas fa-edit me-1"></i>Edit Course
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Course Modal -->
+<div class="modal fade" id="addCourseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Add New Course</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCourseForm">
+                    <div class="mb-3">
+                        <label class="form-label">Course Name</label>
+                        <input type="text" class="form-control" name="course_name" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Theory Hours</label>
+                            <input type="number" class="form-control" name="theory_hours" required min="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Practice Hours</label>
+                            <input type="number" class="form-control" name="practice_hours" required min="0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Teacher</label>
+                        <select class="form-select" name="teacher_id" id="teacherSelect">
+                            <option value="" selected disabled>Select Teacher</option>
+                            <!-- Teachers will be loaded dynamically -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <select class="form-select" name="subject_id" id="subjectSelect">
+                            <option value="" selected disabled>Select Subject</option>
+                            <!-- Subjects will be loaded dynamically -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Student</label>
+                        <select class="form-select" name="student_id" id="studentSelect">
+                            <option value="" selected disabled>Select Student</option>
+                            <!-- Students will be loaded dynamically -->
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="saveCourse">
+                    <i class="fas fa-save me-1"></i>Save Course
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this course? This action cannot be undone.</p>
+                <input type="hidden" id="deleteCourseId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Load courses
+    function loadCourses() {
+        apiService.get('/api/courses', function(data) {
+            const tbody = $('#courseTableBody');
+            tbody.empty();
+
+            if (data.length === 0) {
+                tbody.html(`
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <i class="fas fa-info-circle text-muted me-2"></i>No courses found.
+                            <p class="mt-2">
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+                                    <i class="fas fa-plus me-1"></i>Add Your First Course
+                                </button>
+                            </p>
+                        </td>
+                    </tr>
+                `);
+            } else {
+                // Update stats
+                $('#totalCourseCount').text(data.length);
+
+                // For demo purposes, we'll set some placeholder stats
+                $('#activeCourseCount').text(data.length);
+                $('#avgStudentsCount').text('15');
+
+                // Calculate total hours
+                let totalHours = 0;
+                data.forEach(course => {
+                    totalHours += (parseInt(course.theory_hours || 0) + parseInt(course.practice_hours || 0));
+                });
+                $('#totalHoursCount').text(totalHours);
+
+                // Populate table
+                data.forEach(function(course) {
+                    tbody.append(`
+                        <tr>
+                            <td>${course.id || 'N/A'}</td>
+                            <td>${course.course_name || 'N/A'}</td>
+                            <td>${course.theory_hours || '0'}</td>
+                            <td>${course.practice_hours || '0'}</td>
+                            <td class="teacher-name" data-teacher-id="${course.teacher_id}">
+                                <span class="placeholder-glow">
+                                    <span class="placeholder col-8"></span>
+                                </span>
+                            </td>
+                            <td class="subject-name" data-subject-id="${course.subject_id}">
+                                <span class="placeholder-glow">
+                                    <span class="placeholder col-8"></span>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary rounded-pill">1</span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-info view-course me-1" data-id="${course.id}" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning edit-course me-1" data-id="${course.id}" title="Edit Course">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-course" data-id="${course.id}" title="Delete Course">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                // Load teacher and subject names
+                loadTeacherNames();
+                loadSubjectNames();
+
+                $('#courseCount').text(`Total Courses: ${data.length}`);
+            }
+        }, function(xhr) {
+            $('#courseTableBody').html(`
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Error loading course data.
+                        <p class="mt-2">
+                            <button id="retryLoad" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-sync-alt me-1"></i>Retry
+                            </button>
+                        </p>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    // Load teacher names for the dropdown and table
+    function loadTeacherNames() {
+        apiService.get('/api/teachers', function(teachers) {
+            // Populate teacher dropdown
+            const teacherSelect = $('#teacherSelect');
+            teacherSelect.find('option:not(:first)').remove();
+
+            teachers.forEach(function(teacher) {
+                teacherSelect.append(`
+                    <option value="${teacher.id}">${teacher.first_name} ${teacher.last_name}</option>
+                `);
+            });
+
+            // Update teacher names in the table
+            teachers.forEach(function(teacher) {
+                $(`.teacher-name[data-teacher-id="${teacher.id}"]`).html(
+                    `${teacher.first_name} ${teacher.last_name}`
+                );
+            });
+
+            // Handle any remaining placeholders (teachers not found)
+            $('.teacher-name:has(.placeholder)').html('<em class="text-muted">Not assigned</em>');
+        });
+    }
+
+    // Load subject names for the dropdown and table
+    function loadSubjectNames() {
+        apiService.get('/api/subjects', function(subjects) {
+            // Populate subject dropdown
+            const subjectSelect = $('#subjectSelect');
+            subjectSelect.find('option:not(:first)').remove();
+
+            subjects.forEach(function(subject) {
+                subjectSelect.append(`
+                    <option value="${subject.id}">${subject.subject_name}</option>
+                `);
+            });
+
+            // Update subject names in the table
+            subjects.forEach(function(subject) {
+                $(`.subject-name[data-subject-id="${subject.id}"]`).html(
+                    `${subject.subject_name}`
+                );
+            });
+
+            // Handle any remaining placeholders (subjects not found)
+            $('.subject-name:has(.placeholder)').html('<em class="text-muted">Not assigned</em>');
+        });
+    }
+
+    // Load students for the dropdown
+    function loadStudents() {
+        apiService.get('/api/students', function(students) {
+            // Populate student dropdown
+            const studentSelect = $('#studentSelect');
+            studentSelect.find('option:not(:first)').remove();
+
+            students.forEach(function(student) {
+                studentSelect.append(`
+                    <option value="${student.id}">${student.first_name} ${student.last_name}</option>
+                `);
+            });
+        });
+    }
+
+    // Initial load
+    loadCourses();
+    loadStudents();
+
+    // Refresh button
+    $('#refreshCourses, #retryLoad').on('click', function() {
+        loadCourses();
+    });
+
+    // Search functionality
+    $('#courseSearch').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $('#courseTableBody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+    });
+
+    // Filter functionality
+    $('.filter-option').on('click', function(e) {
+        e.preventDefault();
+        const filter = $(this).data('filter');
+
+        if (filter === 'all') {
+            $('#courseTableBody tr').show();
+        } else if (filter === 'subject' || filter === 'teacher' || filter === 'active') {
+            // This would require additional API functionality in a real app
+            toastManager.showInfo(`Filtering by ${filter} is not implemented in this demo`);
+        }
+    });
+
+    // View course details
+    $(document).on('click', '.view-course', function() {
+        const courseId = $(this).data('id');
+        $('#courseDetails').html(`
+            <div class="text-center py-4">
+                <div class="spinner-border text-warning" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading course details...</p>
+            </div>
+        `);
+
+        $('#viewCourseModal').modal('show');
+
+        // Fetch course details from API
+        apiService.get(`/api/courses/${courseId}`, function(course) {
+            // Get teacher and subject names from the table
+            const teacherName = $(`.teacher-name[data-teacher-id="${course.teacher_id}"]`).text().trim() || 'Not assigned';
+            const subjectName = $(`.subject-name[data-subject-id="${course.subject_id}"]`).text().trim() || 'Not assigned';
+
+            // Calculate total hours
+            const theoryHours = parseInt(course.theory_hours || 0);
+            const practiceHours = parseInt(course.practice_hours || 0);
+            const totalHours = theoryHours + practiceHours;
+
+            $('#courseDetails').html(`
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Course Information</h6>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>ID:</span>
+                                <span class="fw-bold">${course.id}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Name:</span>
+                                <span class="fw-bold">${course.course_name}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Theory Hours:</span>
+                                <span class="fw-bold">${theoryHours}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Practice Hours:</span>
+                                <span class="fw-bold">${practiceHours}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Total Hours:</span>
+                                <span class="fw-bold">${totalHours}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Related Information</h6>
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Teacher</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">${teacherName}</p>
+                                ${course.teacher_id ? `
+                                <a href="#" class="btn btn-sm btn-outline-primary view-teacher-btn" data-id="${course.teacher_id}">
+                                    <i class="fas fa-user me-1"></i>View Teacher
+                                </a>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Subject</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">${subjectName}</p>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Enrolled Students</h6>
+                            </div>
+                            <div class="card-body" id="enrolledStudents">
+                                <div class="text-center">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="text-muted small mt-2">Loading students...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6 class="text-muted">Course Schedule</h6>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>Course schedule information is not available in this demo.
+                        </div>
+                    </div>
+                </div>
+            `);
+
+            // Fetch student info if available
+            if (course.student_id) {
+                apiService.get(`/api/students/${course.student_id}`, function(student) {
+                    $('#enrolledStudents').html(`
+                        <p class="text-muted small">This course has 1 student enrolled.</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge bg-primary">${student.first_name} ${student.last_name}</span>
+                        </div>
+                    `);
+                }, function() {
+                    $('#enrolledStudents').html(`
+                        <p class="text-muted small">This course has 1 student enrolled.</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge bg-primary">Student ID: ${course.student_id}</span>
+                        </div>
+                    `);
+                });
+            } else {
+                $('#enrolledStudents').html(`
+                    <p class="text-muted small">No students are enrolled in this course.</p>
+                `);
+            }
+
+            // Add event listener for view teacher button
+            $('.view-teacher-btn').on('click', function(e) {
+                e.preventDefault();
+                const teacherId = $(this).data('id');
+                $('#viewCourseModal').modal('hide');
+
+                // Find and click the view teacher button for this teacher
+                setTimeout(() => {
+                    $(`.view-teacher[data-id="${teacherId}"]`).click();
+                }, 500);
+            });
+        }, function(xhr) {
+            $('#courseDetails').html(`
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>Error loading course details: ${xhr.responseJSON?.error || 'Unknown error'}
+                </div>
+            `);
+        });
+    });
+
+    // Save new course
+    $('#saveCourse').click(function() {
+        // Validate form
+        const courseName = $('input[name="course_name"]').val();
+        const theoryHours = $('input[name="theory_hours"]').val();
+        const practiceHours = $('input[name="practice_hours"]').val();
+
+        if (!courseName || !theoryHours || !practiceHours) {
+            toastManager.showError('Please fill in all required fields');
+            return;
+        }
+
+        const formData = {
+            course_name: courseName,
+            theory_hours: parseInt(theoryHours),
+            practice_hours: parseInt(practiceHours),
+            teacher_id: $('select[name="teacher_id"]').val() || null,
+            subject_id: $('select[name="subject_id"]').val() || null,
+            student_id: $('select[name="student_id"]').val() || null
+        };
+
+        // Show loading state
+        const saveButton = $('#saveCourse');
+        const originalText = saveButton.html();
+        saveButton.html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...');
+        saveButton.prop('disabled', true);
+
+        apiService.post('/api/courses', formData, function(response) {
+            $('#addCourseModal').modal('hide');
+            $('#addCourseForm')[0].reset();
+            loadCourses();
+            toastManager.showSuccess('Course added successfully!');
+
+            // Reset button state
+            saveButton.html(originalText);
+            saveButton.prop('disabled', false);
+        }, function(xhr) {
+            toastManager.showError('Error adding course: ' + (xhr.responseJSON?.error || 'Unknown error'));
+
+            // Reset button state
+            saveButton.html(originalText);
+            saveButton.prop('disabled', false);
+        });
+    });
+
+    // Show delete confirmation modal
+    $(document).on('click', '.delete-course', function() {
+        const courseId = $(this).data('id');
+        $('#deleteCourseId').val(courseId);
+        $('#confirmationModal').modal('show');
+    });
+
+    // Confirm delete course
+    $('#confirmDelete').click(function() {
+        const courseId = $('#deleteCourseId').val();
+
+        // Show loading state
+        const deleteButton = $('#confirmDelete');
+        const originalText = deleteButton.html();
+        deleteButton.html('<i class="fas fa-spinner fa-spin me-1"></i>Deleting...');
+        deleteButton.prop('disabled', true);
+
+        apiService.delete(`/api/courses/${courseId}`, function() {
+            $('#confirmationModal').modal('hide');
+            loadCourses();
+            toastManager.showSuccess('Course deleted successfully!');
+
+            // Reset button state
+            deleteButton.html(originalText);
+            deleteButton.prop('disabled', false);
+        }, function(xhr) {
+            toastManager.showError('Error deleting course: ' + (xhr.responseJSON?.error || 'Unknown error'));
+
+            // Reset button state
+            deleteButton.html(originalText);
+            deleteButton.prop('disabled', false);
+        });
+    });
+
+    // Export courses (demo functionality)
+    $('#exportCourses').click(function() {
+        toastManager.showInfo('Export functionality is not implemented in this demo');
+    });
+});
+</script>
+{% endblock %}

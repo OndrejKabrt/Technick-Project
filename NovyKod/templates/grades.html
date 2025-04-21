@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+
+{% block title %}Grades - School Management System{% endblock %}
+
+{% block page_header %}Grades Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Grades</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="input-group">
+            <span class="input-group-text bg-primary text-white">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" id="gradeSearch" class="form-control" placeholder="Search grades...">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-filter me-1"></i>Filter
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item filter-option" href="#" data-filter="all">All Grades</a></li>
+                <li><a class="dropdown-item filter-option" href="#" data-filter="student">Filter by Student</a></li>
+                <li><a class="dropdown-item filter-option" href="#" data-filter="course">Filter by Course</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-4 text-end">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGradeModal">
+            <i class="fas fa-plus me-2"></i>Add New Grade
+        </button>
+    </div>
+</div>
+
+<!-- Grades Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-star me-2"></i>Grade Records</h5>
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-secondary" id="refreshGrades">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="exportGrades">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Grade</th>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="gradeTableBody">
+                    <!-- Loading indicator -->
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading grade data...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-light">
+        <div class="d-flex justify-content-between align-items-center">
+            <span id="gradeCount" class="text-muted">Loading grade count...</span>
+            <nav aria-label="Grade pagination" id="gradePagination" class="d-none">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Add Grade Modal -->
+<div class="modal fade" id="addGradeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Add New Grade</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addGradeForm">
+                    <div class="mb-3">
+                        <label class="form-label">Student</label>
+                        <select class="form-select" name="student_id" id="studentSelect" required>
+                            <option value="" selected disabled>Select Student</option>
+                            <!-- Students will be loaded dynamically -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Course</label>
+                        <select class="form-select" name="course_id" id="courseSelect" required>
+                            <option value="" selected disabled>Select Course</option>
+                            <!-- Courses will be loaded dynamically -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Grade Value</label>
+                        <input type="number" class="form-control" name="grade_value" min="1" max="5" required>
+                        <div class="form-text">Enter a grade between 1 and 5.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-control" name="date_of_grade" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="saveGrade">
+                    <i class="fas fa-save me-1"></i>Save Grade
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this grade? This action cannot be undone.</p>
+                <input type="hidden" id="deleteGradeId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Load grades
+    function loadGrades() {
+        apiService.get('/api/grades', function(data) {
+            const tbody = $('#gradeTableBody');
+            tbody.empty();
+
+            if (data.length === 0) {
+                tbody.html(`
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-info-circle text-muted me-2"></i>No grades found.
+                            <p class="mt-2">
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addGradeModal">
+                                    <i class="fas fa-plus me-1"></i>Add Your First Grade
+                                </button>
+                            </p>
+                        </td>
+                    </tr>
+                `);
+                $('#gradeCount').text('Total Grades: 0');
+            } else {
+                data.forEach(function(grade) {
+                    tbody.append(`
+                        <tr>
+                            <td>${grade.id}</td>
+                            <td>${grade.student_name}</td>
+                            <td>${grade.course_name}</td>
+                            <td><span class="badge bg-${getGradeColor(grade.grade_value)}">${grade.grade_value}</span></td>
+                            <td>${formatDate(grade.date_of_grade)}</td>
+                            <td>${grade.description}</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-warning edit-grade me-1" data-id="${grade.id}" title="Edit Grade">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-grade" data-id="${grade.id}" title="Delete Grade">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                $('#gradeCount').text(`Total Grades: ${data.length}`);
+            }
+        }, function(xhr) {
+            $('#gradeTableBody').html(`
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Error loading grade data.
+                        <p class="mt-2">
+                            <button id="retryLoad" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-sync-alt me-1"></i>Retry
+                            </button>
+                        </p>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    // Helper function to get color based on grade value
+    function getGradeColor(grade) {
+        switch(parseInt(grade)) {
+            case 5: return 'success';
+            case 4: return 'info';
+            case 3: return 'primary';
+            case 2: return 'warning';
+            case 1: return 'danger';
+            default: return 'secondary';
+        }
+    }
+
+    // Format date
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    // Load students for the dropdown
+    function loadStudents() {
+        apiService.get('/api/students', function(students) {
+            const studentSelect = $('#studentSelect');
+            studentSelect.find('option:not(:first)').remove();
+
+            students.forEach(function(student) {
+                studentSelect.append(`
+                    <option value="${student.id}">${student.first_name} ${student.last_name}</option>
+                `);
+            });
+        });
+    }
+
+    // Load courses for the dropdown
+    function loadCourses() {
+        apiService.get('/api/courses', function(courses) {
+            const courseSelect = $('#courseSelect');
+            courseSelect.find('option:not(:first)').remove();
+
+            courses.forEach(function(course) {
+                courseSelect.append(`
+                    <option value="${course.id}">${course.course_name}</option>
+                `);
+            });
+        });
+    }
+
+    // Initial load
+    loadGrades();
+    loadStudents();
+    loadCourses();
+
+    // Refresh button
+    $('#refreshGrades, #retryLoad').on('click', function() {
+        loadGrades();
+    });
+
+    // Search functionality
+    $('#gradeSearch').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $('#gradeTableBody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+    });
+
+    // Filter functionality
+    $('.filter-option').on('click', function(e) {
+        e.preventDefault();
+        const filter = $(this).data('filter');
+
+        if (filter === 'all') {
+            $('#gradeTableBody tr').show();
+        } else {
+            toastManager.showInfo(`Filtering by ${filter} is not implemented in this demo`);
+        }
+    });
+
+    // Save new grade
+    $('#saveGrade').click(function() {
+        // Validate form
+        const studentId = $('#studentSelect').val();
+        const courseId = $('#courseSelect').val();
+        const gradeValue = $('input[name="grade_value"]').val();
+        const dateOfGrade = $('input[name="date_of_grade"]').val();
+
+        if (!studentId || !courseId || !gradeValue || !dateOfGrade) {
+            toastManager.showError('Please fill in all required fields');
+            return;
+        }
+
+        // Get student and course names for display
+        const studentName = $('#studentSelect option:selected').text();
+        const courseName = $('#courseSelect option:selected').text();
+
+        const formData = {
+            student_id: parseInt(studentId),
+            student_name: studentName,
+            course_id: parseInt(courseId),
+            course_name: courseName,
+            grade_value: parseInt(gradeValue),
+            date_of_grade: dateOfGrade,
+            description: $('textarea[name="description"]').val() || ''
+        };
+
+        // Show loading state
+        const saveButton = $('#saveGrade');
+        const originalText = saveButton.html();
+        saveButton.html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...');
+        saveButton.prop('disabled', true);
+
+        apiService.post('/api/grades', formData, function(response) {
+            $('#addGradeModal').modal('hide');
+            $('#addGradeForm')[0].reset();
+            toastManager.showSuccess('Grade added successfully!');
+            loadGrades();
+
+            // Reset button state
+            saveButton.html(originalText);
+            saveButton.prop('disabled', false);
+        }, function(xhr) {
+            // Reset button state
+            saveButton.html(originalText);
+            saveButton.prop('disabled', false);
+        });
+    });
+
+    // Show delete confirmation modal
+    $(document).on('click', '.delete-grade', function() {
+        const gradeId = $(this).data('id');
+        $('#deleteGradeId').val(gradeId);
+        $('#confirmationModal').modal('show');
+    });
+
+    // Confirm delete grade
+    $('#confirmDelete').click(function() {
+        const gradeId = $('#deleteGradeId').val();
+
+        // Show loading state
+        const deleteButton = $('#confirmDelete');
+        const originalText = deleteButton.html();
+        deleteButton.html('<i class="fas fa-spinner fa-spin me-1"></i>Deleting...');
+        deleteButton.prop('disabled', true);
+
+        apiService.delete(`/api/grades/${gradeId}`, function(response) {
+            $('#confirmationModal').modal('hide');
+            toastManager.showSuccess('Grade deleted successfully!');
+            loadGrades();
+
+            // Reset button state
+            deleteButton.html(originalText);
+            deleteButton.prop('disabled', false);
+        }, function(xhr) {
+            // Reset button state
+            deleteButton.html(originalText);
+            deleteButton.prop('disabled', false);
+        });
+    });
+
+    // Export grades (demo functionality)
+    $('#exportGrades').click(function() {
+        toastManager.showInfo('Export functionality is not implemented in this demo');
+    });
+});
+</script>
+{% endblock %}

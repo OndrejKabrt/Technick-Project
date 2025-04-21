@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }} Functions</title>
+    <style>
+        .function {
+            margin: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .method {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        .endpoint {
+            color: #e74c3c;
+        }
+        .description {
+            margin-top: 10px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ title }} API Functions</h1>
+    {% for function in functions %}
+    <div class="function">
+        <span class="method">{{ function.method }}</span>
+        <span class="endpoint">{{ function.endpoint }}</span>
+        <div class="description">{{ function.description }}</div>
+    </div>
+    {% endfor %}
+</body>
+</html>

@@ -1,0 +1,613 @@
+{% extends "base.html" %}
+
+{% block title %}Teachers - School Management System{% endblock %}
+
+{% block page_header %}Teachers Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Teachers</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="input-group">
+            <span class="input-group-text bg-primary text-white">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" id="teacherSearch" class="form-control" placeholder="Search teachers...">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-filter me-1"></i>Filter
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item filter-option" href="#" data-filter="all">All Teachers</a></li>
+                <li><a class="dropdown-item filter-option" href="#" data-filter="subject">Filter by Subject</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item filter-option" href="#" data-filter="class-teacher">Class Teachers Only</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-4 text-end">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTeacherModal">
+            <i class="fas fa-plus me-2"></i>Add New Teacher
+        </button>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-0">Total Teachers</h6>
+                        <h2 class="mt-2 mb-0" id="totalTeacherCount">-</h2>
+                    </div>
+                    <div class="bg-info bg-opacity-10 p-3 rounded">
+                        <i class="fas fa-chalkboard-teacher fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-0">Class Teachers</h6>
+                        <h2 class="mt-2 mb-0" id="classTeacherCount">-</h2>
+                    </div>
+                    <div class="bg-success bg-opacity-10 p-3 rounded">
+                        <i class="fas fa-user-tie fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-0">Subjects Taught</h6>
+                        <h2 class="mt-2 mb-0" id="subjectsCount">-</h2>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 p-3 rounded">
+                        <i class="fas fa-book-open fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-0">Avg. Courses</h6>
+                        <h2 class="mt-2 mb-0" id="avgCoursesCount">-</h2>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 p-3 rounded">
+                        <i class="fas fa-chart-line fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Teachers Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-chalkboard-teacher me-2"></i>Teacher Records</h5>
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-secondary" id="refreshTeachers">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="exportTeachers">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="teacherTableBody">
+                    <!-- Loading indicator -->
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading teacher data...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-light">
+        <div class="d-flex justify-content-between align-items-center">
+            <span id="teacherCount" class="text-muted">Loading teacher count...</span>
+            <nav aria-label="Teacher pagination" id="teacherPagination" class="d-none">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Teacher Details Modal -->
+<div class="modal fade" id="viewTeacherModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-chalkboard-teacher me-2"></i>Teacher Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="teacherDetails">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading teacher details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="editTeacherBtn">
+                    <i class="fas fa-edit me-1"></i>Edit Teacher
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Teacher Modal -->
+<div class="modal fade" id="addTeacherModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Add New Teacher</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addTeacherForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">First Name</label>
+                            <input type="text" class="form-control" name="first_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" class="form-control" name="last_name" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text">@</span>
+                            <input type="text" class="form-control" name="teacher_username" required>
+                        </div>
+                        <div class="form-text">Username will be used for login purposes.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" name="phone_number" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Subjects</label>
+                        <select class="form-select" id="subjectSelect" multiple>
+                            <!-- Subjects will be loaded dynamically -->
+                        </select>
+                        <div class="form-text">Hold Ctrl (or Cmd) to select multiple subjects.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="saveTeacher">
+                    <i class="fas fa-save me-1"></i>Save Teacher
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this teacher? This action cannot be undone.</p>
+                <input type="hidden" id="deleteTeacherId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Load teachers
+    function loadTeachers() {
+        apiService.get('/api/teachers', function(data) {
+            const tbody = $('#teacherTableBody');
+            tbody.empty();
+
+            if (data.length === 0) {
+                tbody.html(`
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-info-circle text-muted me-2"></i>No teachers found.
+                            <p class="mt-2">
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addTeacherModal">
+                                    <i class="fas fa-plus me-1"></i>Add Your First Teacher
+                                </button>
+                            </p>
+                        </td>
+                    </tr>
+                `);
+            } else {
+                // Update stats
+                $('#totalTeacherCount').text(data.length);
+
+                // For demo purposes, we'll set some placeholder stats
+                $('#classTeacherCount').text(Math.round(data.length * 0.4));
+                $('#subjectsCount').text('12');
+                $('#avgCoursesCount').text('3.5');
+
+                // Populate table
+                data.forEach(function(teacher) {
+                    tbody.append(`
+                        <tr>
+                            <td>${teacher.id || 'N/A'}</td>
+                            <td>${teacher.first_name || 'N/A'}</td>
+                            <td>${teacher.last_name || 'N/A'}</td>
+                            <td>${teacher.teacher_username || 'N/A'}</td>
+                            <td>${teacher.email || 'N/A'}</td>
+                            <td>${teacher.phone_number || 'N/A'}</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-info view-teacher me-1" data-id="${teacher.id}" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning edit-teacher me-1" data-id="${teacher.id}" title="Edit Teacher">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-teacher" data-id="${teacher.id}" title="Delete Teacher">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                $('#teacherCount').text(`Total Teachers: ${data.length}`);
+            }
+        }, function(xhr) {
+            $('#teacherTableBody').html(`
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Error loading teacher data.
+                        <p class="mt-2">
+                            <button id="retryLoad" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-sync-alt me-1"></i>Retry
+                            </button>
+                        </p>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    // Load subjects for the dropdown
+    function loadSubjects() {
+        apiService.get('/api/subjects', function(subjects) {
+            // Populate subject dropdown
+            const subjectSelect = $('#subjectSelect');
+            subjectSelect.empty();
+
+            subjects.forEach(function(subject) {
+                subjectSelect.append(`
+                    <option value="${subject.id}">${subject.subject_name}</option>
+                `);
+            });
+        });
+    }
+
+    // Initial load
+    loadTeachers();
+    loadSubjects();
+
+    // Refresh button
+    $('#refreshTeachers, #retryLoad').on('click', function() {
+        loadTeachers();
+    });
+
+    // Search functionality
+    $('#teacherSearch').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $('#teacherTableBody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+    });
+
+    // Filter functionality
+    $('.filter-option').on('click', function(e) {
+        e.preventDefault();
+        const filter = $(this).data('filter');
+
+        if (filter === 'all') {
+            $('#teacherTableBody tr').show();
+        } else if (filter === 'subject') {
+            // This would require additional API functionality in a real app
+            toastManager.showInfo('Filtering by subject is not implemented in this demo');
+        } else if (filter === 'class-teacher') {
+            // This would require additional API functionality in a real app
+            toastManager.showInfo('Filtering by class teacher is not implemented in this demo');
+        }
+    });
+
+    // View teacher details
+    $(document).on('click', '.view-teacher', function() {
+        const teacherId = $(this).data('id');
+        $('#teacherDetails').html(`
+            <div class="text-center py-4">
+                <div class="spinner-border text-info" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading teacher details...</p>
+            </div>
+        `);
+
+        $('#viewTeacherModal').modal('show');
+
+        // Fetch teacher details from API
+        apiService.get(`/api/teachers/${teacherId}`, function(teacher) {
+            // Prepare the basic teacher info
+            let detailsHtml = `
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="bg-light p-3 rounded-circle mx-auto mb-3" style="width: 120px; height: 120px;">
+                            <i class="fas fa-user-tie fa-4x text-info mt-2"></i>
+                        </div>
+                        <h5>${teacher.first_name} ${teacher.last_name}</h5>
+                        <p class="text-muted">Teacher ID: ${teacher.id}</p>
+                    </div>
+                    <div class="col-md-8">
+                        <h6 class="text-muted">Contact Information</h6>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Username:</span>
+                                <span class="fw-bold">${teacher.teacher_username || 'N/A'}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Email:</span>
+                                <span class="fw-bold">${teacher.email || 'N/A'}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Phone:</span>
+                                <span class="fw-bold">${teacher.phone_number || 'N/A'}</span>
+                            </li>
+                        </ul>
+
+                        <h6 class="text-muted">Teaching Information</h6>
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Assigned Classes</h6>
+                            </div>
+                            <div class="card-body" id="teacherClasses">
+                                <div class="text-center">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="text-muted small mt-2">Loading classes...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Subjects Taught</h6>
+                            </div>
+                            <div class="card-body" id="teacherSubjects">
+                                <div class="text-center">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="text-muted small mt-2">Loading subjects...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('#teacherDetails').html(detailsHtml);
+
+            // Fetch teacher's classes
+            apiService.get(`/api/teachers/${teacherId}/classes`, function(classes) {
+                if (classes.length === 0) {
+                    $('#teacherClasses').html(`
+                        <p class="text-muted small">This teacher is not assigned as a class teacher.</p>
+                    `);
+                } else {
+                    let classesHtml = `
+                        <p class="text-muted small">This teacher is assigned as class teacher for:</p>
+                        <div class="d-flex flex-wrap gap-2">
+                    `;
+
+                    classes.forEach(function(cls) {
+                        classesHtml += `<span class="badge bg-primary">${cls.name}</span>`;
+                    });
+
+                    classesHtml += `</div>`;
+                    $('#teacherClasses').html(classesHtml);
+                }
+            }, function() {
+                $('#teacherClasses').html(`
+                    <div class="alert alert-danger py-2">
+                        <i class="fas fa-exclamation-circle me-2"></i>Error loading classes
+                    </div>
+                `);
+            });
+
+            // Fetch teacher's subjects
+            apiService.get(`/api/teachers/${teacherId}/subjects`, function(subjects) {
+                if (subjects.length === 0) {
+                    $('#teacherSubjects').html(`
+                        <p class="text-muted small">This teacher does not teach any subjects.</p>
+                    `);
+                } else {
+                    let subjectsHtml = `<div class="d-flex flex-wrap gap-2">`;
+
+                    subjects.forEach(function(subject) {
+                        subjectsHtml += `<span class="badge bg-info">${subject.name}</span>`;
+                    });
+
+                    subjectsHtml += `</div>`;
+                    $('#teacherSubjects').html(subjectsHtml);
+                }
+            }, function() {
+                $('#teacherSubjects').html(`
+                    <div class="alert alert-danger py-2">
+                        <i class="fas fa-exclamation-circle me-2"></i>Error loading subjects
+                    </div>
+                `);
+            });
+        }, function(xhr) {
+            $('#teacherDetails').html(`
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>Error loading teacher details: ${xhr.responseJSON?.error || 'Unknown error'}
+                </div>
+            `);
+        });
+    });
+
+    // Save new teacher
+    $('#saveTeacher').click(function() {
+        // Validate form
+        const firstName = $('input[name="first_name"]').val();
+        const lastName = $('input[name="last_name"]').val();
+        const username = $('input[name="teacher_username"]').val();
+        const email = $('input[name="email"]').val();
+
+        if (!firstName || !lastName || !username || !email) {
+            toastManager.showError('Please fill in all required fields');
+            return;
+        }
+
+        const formData = {
+            first_name: firstName,
+            last_name: lastName,
+            teacher_username: username,
+            email: email,
+            phone_number: $('input[name="phone_number"]').val() || ''
+        };
+
+        // Show loading state
+        const saveButton = $('#saveTeacher');
+        const originalText = saveButton.html();
+        saveButton.html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...');
+        saveButton.prop('disabled', true);
+
+        apiService.post('/api/teachers', formData, function(response) {
+            $('#addTeacherModal').modal('hide');
+            $('#addTeacherForm')[0].reset();
+            loadTeachers();
+            toastManager.showSuccess('Teacher added successfully!');
+
+            // Reset button state
+            saveButton.html(originalText);
+            saveButton.prop('disabled', false);
+        }, function(xhr) {
+            toastManager.showError('Error adding teacher: ' + (xhr.responseJSON?.error || 'Unknown error'));
+
+            // Reset button state
+            saveButton.html(originalText);
+            saveButton.prop('disabled', false);
+        });
+    });
+
+    // Show delete confirmation modal
+    $(document).on('click', '.delete-teacher', function() {
+        const teacherId = $(this).data('id');
+        $('#deleteTeacherId').val(teacherId);
+        $('#confirmationModal').modal('show');
+    });
+
+    // Confirm delete teacher
+    $('#confirmDelete').click(function() {
+        const teacherId = $('#deleteTeacherId').val();
+
+        // Show loading state
+        const deleteButton = $('#confirmDelete');
+        const originalText = deleteButton.html();
+        deleteButton.html('<i class="fas fa-spinner fa-spin me-1"></i>Deleting...');
+        deleteButton.prop('disabled', true);
+
+        apiService.delete(`/api/teachers/${teacherId}`, function() {
+            $('#confirmationModal').modal('hide');
+            loadTeachers();
+            toastManager.showSuccess('Teacher deleted successfully!');
+
+            // Reset button state
+            deleteButton.html(originalText);
+            deleteButton.prop('disabled', false);
+        }, function(xhr) {
+            toastManager.showError('Error deleting teacher: ' + (xhr.responseJSON?.error || 'Unknown error'));
+
+            // Reset button state
+            deleteButton.html(originalText);
+            deleteButton.prop('disabled', false);
+        });
+    });
+
+    // Export teachers (demo functionality)
+    $('#exportTeachers').click(function() {
+        toastManager.showInfo('Export functionality is not implemented in this demo');
+    });
+});
+</script>
+{% endblock %}

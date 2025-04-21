@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - School Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .api-card {
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        .api-card:hover {
+            transform: translateY(-5px);
+        }
+        .header {
+            background-color: #0d6efd;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header text-center">
+            <h1><i class="fas fa-code me-3"></i>API Documentation</h1>
+            <p class="lead">School Management System API Reference</p>
+            <a href="{{ url_for('index') }}" class="btn btn-light mt-2">
+                <i class="fas fa-home me-2"></i>Back to Dashboard
+            </a>
+        </div>
+
+        <div class="row">
+            {% for doc in docs %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card api-card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            {% if doc.name == 'Students' %}
+                                <i class="fas fa-user-graduate text-primary me-2"></i>
+                            {% elif doc.name == 'Classes' %}
+                                <i class="fas fa-chalkboard text-success me-2"></i>
+                            {% elif doc.name == 'Teachers' %}
+                                <i class="fas fa-chalkboard-teacher text-info me-2"></i>
+                            {% elif doc.name == 'Courses' %}
+                                <i class="fas fa-book text-warning me-2"></i>
+                            {% elif doc.name == 'Subjects' %}
+                                <i class="fas fa-book-open text-danger me-2"></i>
+                            {% elif doc.name == 'Grades' %}
+                                <i class="fas fa-star text-secondary me-2"></i>
+                            {% elif doc.name == 'Certificates' %}
+                                <i class="fas fa-certificate text-dark me-2"></i>
+                            {% elif doc.name == 'Student Cards' %}
+                                <i class="fas fa-id-card text-primary me-2"></i>
+                            {% else %}
+                                <i class="fas fa-file-code text-muted me-2"></i>
+                            {% endif %}
+                            {{ doc.name }} API
+                        </h5>
+                        <p class="card-text">Access and manage {{ doc.name.lower() }} data through RESTful endpoints.</p>
+                        <a href="{{ doc.url }}" class="btn btn-outline-primary">
+                            <i class="fas fa-external-link-alt me-2"></i>View Documentation
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-5 p-4 bg-white rounded shadow">
+            <h3>Getting Started</h3>
+            <p>The School Management System API provides programmatic access to school data. All API endpoints return JSON data.</p>
+            
+            <h4 class="mt-4">Authentication</h4>
+            <p>Currently, the API does not require authentication for development purposes. In a production environment, proper authentication would be implemented.</p>
+            
+            <h4 class="mt-4">Base URL</h4>
+            <div class="bg-light p-3 rounded">
+                <code>http://localhost:5000/api</code>
+            </div>
+            
+            <h4 class="mt-4">Common Response Codes</h4>
+            <ul class="list-group">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    200 OK
+                    <span class="badge bg-success">Success</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    201 Created
+                    <span class="badge bg-primary">Resource Created</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    400 Bad Request
+                    <span class="badge bg-warning">Invalid Input</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    404 Not Found
+                    <span class="badge bg-danger">Resource Not Found</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    500 Internal Server Error
+                    <span class="badge bg-dark">Server Error</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <footer class="mt-5 text-center text-muted">
+        <p>School Management System API &copy; 2023</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

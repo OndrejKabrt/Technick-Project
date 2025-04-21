@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+
+{% block title %}Students - School Management System{% endblock %}
+
+{% block page_header %}Students Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="input-group">
+            <span class="input-group-text bg-primary text-white">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" id="studentSearch" class="form-control" placeholder="Search students...">
+        </div>
+    </div>
+    <div class="col-md-4 text-end">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+            <i class="fas fa-plus me-2"></i>Add New Student
+        </button>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="fas fa-user-graduate me-2"></i>Student Records</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Username</th>
+                        <th>Class Order</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody">
+                    <!-- Data will be loaded here -->
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading student data...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-light">
+        <div class="d-flex justify-content-between align-items-center">
+            <span id="studentCount" class="text-muted">Loading student count...</span>
+            <div>
+                <button id="refreshStudents" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Details Modal -->
+<div class="modal fade" id="viewStudentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-user-graduate me-2"></i>Student Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="studentDetails">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading student details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="editStudentBtn">
+                    <i class="fas fa-edit me-1"></i>Edit Student
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal fade" id="addStudentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Add New Student</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addStudentForm">
+                    <div class="mb-3">
+                        <label class="form-label">First Name</label>
+                        <input type="text" class="form-control" name="first_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" class="form-control" name="last_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Class Order</label>
+                        <input type="number" class="form-control" name="number_in_class_order" required>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>Username and password will be automatically generated.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="saveStudent">
+                    <i class="fas fa-save me-1"></i>Save Student
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this student? This action cannot be undone.</p>
+                <input type="hidden" id="deleteStudentId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notifications -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i><span id="successToastMessage"></span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+
+    <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-exclamation-circle me-2"></i><span id="errorToastMessage"></span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize toasts
+    const successToast = new bootstrap.Toast(document.getElementById('successToast'));
+    const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+
+    // Show success message
+    function showSuccess(message) {
+        $('#successToastMessage').text(message);
+        successToast.show();
+    }
+
+    // Show error message
+    function showError(message) {
+        $('#errorToastMessage').text(message);
+        errorToast.show();
+    }
+
+    // Load students
+    function loadStudents() {
+        $.ajax({
+            url: '/api/students',
+            method: 'GET',
+            success: function(data) {
+                const tbody = $('#studentTableBody');
+                tbody.empty();
+
+                if (data.length === 0) {
+                    tbody.html(`
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="fas fa-info-circle text-muted me-2"></i>No students found.
+                                <p class="mt-2">
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                                        <i class="fas fa-plus me-1"></i>Add Your First Student
+                                    </button>
+                                </p>
+                            </td>
+                        </tr>
+                    `);
+                } else {
+                    data.forEach(function(student) {
+                        tbody.append(`
+                            <tr>
+                                <td>${student.id || 'N/A'}</td>
+                                <td>${student.first_name || 'N/A'}</td>
+                                <td>${student.last_name || 'N/A'}</td>
+                                <td>${student.user_name || 'N/A'}</td>
+                                <td>${student.number_in_class_order || 'N/A'}</td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-info view-student me-1" data-id="${student.id}" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger delete-student" data-id="${student.id}" title="Delete Student">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                }
+
+                $('#studentCount').text(`Total Students: ${data.length}`);
+            },
+            error: function(xhr) {
+                showError('Error loading students: ' + (xhr.responseJSON?.error || 'Unknown error'));
+                $('#studentTableBody').html(`
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Error loading student data.
+                            <p class="mt-2">
+                                <button id="retryLoad" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-sync-alt me-1"></i>Retry
+                                </button>
+                            </p>
+                        </td>
+                    </tr>
+                `);
+            }
+        });
+    }
+
+    // Initial load
+    loadStudents();
+
+    // Refresh button
+    $('#refreshStudents, #retryLoad').on('click', function() {
+        loadStudents();
+    });
+
+    // Search functionality
+    $('#studentSearch').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $('#studentTableBody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+    });
+
+    // View student details
+    $(document).on('click', '.view-student', function() {
+        const studentId = $(this).data('id');
+        $('#studentDetails').html(`
+            <div class="text-center py-4">
+                <div class="spinner-border text-info" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading student details...</p>
+            </div>
+        `);
+
+        $('#viewStudentModal').modal('show');
+
+        $.ajax({
+            url: `/api/students/${studentId}`,
+            method: 'GET',
+            success: function(student) {
+                $('#studentDetails').html(`
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Personal Information</h6>
+                            <ul class="list-group mb-3">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>ID:</span>
+                                    <span class="fw-bold">${student.id}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>First Name:</span>
+                                    <span class="fw-bold">${student.first_name}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Last Name:</span>
+                                    <span class="fw-bold">${student.last_name}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Username:</span>
+                                    <span class="fw-bold">${student.user_name}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Class Order:</span>
+                                    <span class="fw-bold">${student.number_in_class_order}</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Academic Information</h6>
+                            <div class="text-center py-4" id="studentGrades">
+                                <div class="spinner-border spinner-border-sm text-info" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2 text-muted small">Loading grades...</p>
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+                // Load student grades
+                $.ajax({
+                    url: `/api/grades/student/${studentId}`,
+                    method: 'GET',
+                    success: function(grades) {
+                        if (grades.length === 0) {
+                            $('#studentGrades').html(`
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>No grades found for this student.
+                                </div>
+                            `);
+                        } else {
+                            let gradesHtml = '<ul class="list-group">';
+                            grades.forEach(function(grade) {
+                                gradesHtml += `
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>${grade.description}</span>
+                                        <span class="badge bg-primary rounded-pill">${grade.grade}</span>
+                                    </li>
+                                `;
+                            });
+                            gradesHtml += '</ul>';
+                            $('#studentGrades').html(gradesHtml);
+                        }
+                    },
+                    error: function() {
+                        $('#studentGrades').html(`
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-2"></i>Error loading grades.
+                            </div>
+                        `);
+                    }
+                });
+            },
+            error: function(xhr) {
+                $('#studentDetails').html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>Error loading student details: ${xhr.responseJSON?.error || 'Unknown error'}
+                    </div>
+                `);
+            }
+        });
+    });
+
+    // Save new student
+    $('#saveStudent').click(function() {
+        const formData = {
+            first_name: $('input[name="first_name"]').val(),
+            last_name: $('input[name="last_name"]').val(),
+            number_in_class_order: parseInt($('input[name="number_in_class_order"]').val()),
+            user_name: "auto", // Will be generated by backend
+            user_password: "auto", // Will be generated by backend
+            is_student: true
+        };
+
+        $.ajax({
+            url: '/api/students',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                $('#addStudentModal').modal('hide');
+                $('#addStudentForm')[0].reset();
+                loadStudents();
+                showSuccess('Student added successfully!');
+            },
+            error: function(xhr) {
+                showError('Error adding student: ' + (xhr.responseJSON?.error || 'Unknown error'));
+            }
+        });
+    });
+
+    // Show delete confirmation modal
+    $(document).on('click', '.delete-student', function() {
+        const studentId = $(this).data('id');
+        $('#deleteStudentId').val(studentId);
+        $('#confirmationModal').modal('show');
+    });
+
+    // Confirm delete student
+    $('#confirmDelete').click(function() {
+        const studentId = $('#deleteStudentId').val();
+
+        $.ajax({
+            url: `/api/students/${studentId}`,
+            method: 'DELETE',
+            success: function() {
+                $('#confirmationModal').modal('hide');
+                loadStudents();
+                showSuccess('Student deleted successfully!');
+            },
+            error: function(xhr) {
+                $('#confirmationModal').modal('hide');
+                showError('Error deleting student: ' + (xhr.responseJSON?.error || 'Unknown error'));
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
